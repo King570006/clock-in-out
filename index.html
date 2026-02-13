@@ -233,11 +233,13 @@
 
   // WRITE CLOCK-OUT LOG
   await db.collection("logs").add({
-    uid: auth.currentUser.uid,
-    type: "out",
-    time: now,
-    location: loc
-  });
+  uid: auth.currentUser.uid,
+  type: "out",
+  time: now,
+  readableTime: now.toLocaleString(),
+  action: "CLOCK_OUT",
+  location: loc
+});
 
   // UPDATE USER STATUS
   await db.collection("users")
