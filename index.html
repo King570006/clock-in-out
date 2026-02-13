@@ -133,12 +133,12 @@ auth.onAuthStateChanged(async user => {
 function showIn(t){ 
   document.querySelector(".primary").style.display="none";
   document.querySelector(".secondary").style.display="block";
-  status.innerText=`CLOCKED IN since ${t}`;
+  statusText.innerText = `CLOCKED IN since ${t}`;
 }
 function showOut(){
   document.querySelector(".primary").style.display="block";
   document.querySelector(".secondary").style.display="none";
-  status.innerText="CLOCKED OUT";
+  statusText.innerText = "CLOCKED OUT";
 }
 
 async function clockIn(){
