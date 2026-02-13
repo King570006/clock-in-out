@@ -143,15 +143,17 @@
   }
 
   auth.onAuthStateChanged(async user => {
-    if (user) {
-      document.getElementById("login").style.display = "none";
-      document.getElementById("controls").style.display = "block";
-      await loadUserStatus(user.uid);
-    } else {
-      document.getElementById("login").style.display = "block";
-      document.getElementById("controls").style.display = "none";
-    }
-  });
+  if (user) {
+    alert("YOUR UID IS:\n\n" + user.uid);
+
+    document.getElementById("login").style.display = "none";
+    document.getElementById("controls").style.display = "block";
+    await loadUserStatus(user.uid);
+  } else {
+    document.getElementById("login").style.display = "block";
+    document.getElementById("controls").style.display = "none";
+  }
+});
 
   function getLocation() {
     return new Promise((resolve, reject) => {
