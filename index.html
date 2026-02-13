@@ -213,11 +213,12 @@
     });
 
     await db.collection("users")
-      .doc(auth.currentUser.uid)
-      .set({
-        status: "in",
-        since: now
-      });
+  .doc(auth.currentUser.uid)
+  .set({
+    email: auth.currentUser.email,
+    status: "in",
+    since: now
+  }, { merge: true });
 
     lastAction = "in";
     showClockedInUI(now.toLocaleTimeString());
@@ -252,10 +253,11 @@
 
   // UPDATE USER STATUS
   await db.collection("users")
-    .doc(auth.currentUser.uid)
-    .set({
-      status: "out"
-    });
+  .doc(auth.currentUser.uid)
+  .set({
+    email: auth.currentUser.email,
+    status: "out"
+  }, { merge: true });
 
   lastAction = "out";
   showClockedOutUI();
