@@ -217,7 +217,6 @@
     async function clockOut() {
   if (!auth.currentUser) return;
 
-  // 🔥 Check Firestore, not just local state
   const userDoc = await db
     .collection("users")
     .doc(auth.currentUser.uid)
@@ -232,7 +231,7 @@
   const loc = await getLocation();
   const now = new Date();
 
-  // ✅ WRITE CLOCK-OUT LOG
+  // WRITE CLOCK-OUT LOG
   await db.collection("logs").add({
     uid: auth.currentUser.uid,
     type: "out",
@@ -240,7 +239,7 @@
     location: loc
   });
 
-  // ✅ UPDATE USER STATUS
+  // UPDATE USER STATUS
   await db.collection("users")
     .doc(auth.currentUser.uid)
     .set({
