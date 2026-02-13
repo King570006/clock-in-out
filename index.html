@@ -105,8 +105,8 @@
     </div>
 
     <div id="controls">
-      <button onclick="clockIn()">Clock In</button>
-      <button class="secondary" onclick="clockOut()">Clock Out</button>
+      <button class="primary" onclick="clockIn()">Clock In</button>
+<button class="secondary" onclick="clockOut()">Clock Out</button>
       <div id="status"></div>
     </div>
   </div>
@@ -127,21 +127,30 @@
     };
 
     firebase.initializeApp(firebaseConfig);
+    
+    firebase.firestore().settings({ ignoreUndefinedProperties: true });
 
     const auth = firebase.auth();
     const db = firebase.firestore();
 
     function login() {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
 
-      auth.signInWithEmailAndPassword(email, password)
-        .then(() => {
-          document.getElementById("login").style.display = "none";
-          document.getElementById("controls").style.display = "block";
-        })
-        .catch(err => alert(err.message));
-    }
+  auth.signInWithEmailAndPassword(email, password)
+    .catch(err => alert(err.message));
+}
+
+auth.onAuthStateChanged(user => {
+  if (user) {
+    document.getElementById("login").style.display = "none";
+    document.getElementById("controls").style.display = "block";
+    document.getElementById("status").innerText = "Logged in";
+  } else {
+    document.getElementById("login").style.display = "block";
+    document.getElementById("controls").style.display = "none";
+  }
+});
 
     function getLocation() {
       return new Promise((resolve, reject) => {
@@ -155,27 +164,43 @@
       });
     }
 
-    async function clockIn() {
-      const loc = await getLocation();
-      await db.collection("logs").add({
-        uid: auth.currentUser.uid,
-        type: "in",
-        time: new Date(),
-        location: loc
-      });
-      document.getElementById("status").innerText = "Clocked in ✔";
-    }
+    let lastAction = null;
 
-    async function clockOut() {
-      const loc = await getLocation();
-      await db.collection("logs").add({
-        uid: auth.currentUser.uid,
-        type: "out",
-        time: new Date(),
-        location: loc
-      });
-      document.getElementById("status").innerText = "Clocked out ✔";
-    }
+async function clockIn() {
+  if (lastAction === "in") {
+    document.getElementById("status").innerText = "Already clocked in";
+    return;
+  }
+
+  const loc = await getLocation();
+  await db.collection("logs").add({
+    uid: auth.currentUser.uid,
+    type: "in",
+    time: new Date(),
+    location: loc
+  });
+
+  lastAction = "in";
+  document.getElementById("status").innerText = "You are CLOCKED IN";
+}
+
+async function clockOut() {
+  if (lastAction !== "in") {
+    document.getElementById("status").innerText = "You must clock in first";
+    return;
+  }
+
+  const loc = await getLocation();
+  await db.collection("logs").add({
+    uid: auth.currentUser.uid,
+    type: "out",
+    time: new Date(),
+    location: loc
+  });
+
+  lastAction = "out";
+  document.getElementById("status").innerText = "You are CLOCKED OUT";
+}
   </script>
 
 </body>
