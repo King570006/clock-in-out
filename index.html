@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Clock In / Out</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Basic styling -->
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #0f0f0f;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .card {
+      width: 100%;
+      max-width: 360px;
+      background: #1c1c1c;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.4);
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    input, button {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+      border: none;
+      font-size: 16px;
+    }
+    input {
+      background: #2b2b2b;
+      color: #fff;
+    }
+    button {
+      background: #ff9800;
+      color: #000;
+      font-weight: bold;
+    }
+    button.secondary {
+      background: #555;
+      color: #fff;
+    }
+    #controls {
+      display: none;
+    }
+    #status {
+      text-align: center;
+      margin-top: 10px;
+      font-size: 14px;
+      opacity: 0.9;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h1>Clock In / Out</h1>
+
+    <div id="login">
+      <input id="email" type="email" placeholder="Email" />
+      <input id="password" type="password" placeholder="Password" />
+      <button onclick="login()">Login</button>
+    </div>
+
+    <div id="controls">
+      <button onclick="clockIn()">Clock In</button>
+      <button class="secondary" onclick="clockOut()">Clock Out</button>
+      <div id="status"></div>
+    </div>
+  </div>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCnzBdlGPviltn6P8pID14lgkXHx6zQifA",
+      authDomain: "clock-in-out-56209.firebaseapp.com",
+      projectId: "clock-in-out-56209",
+      storageBucket: "clock-in-out-56209.appspot.com",
+      messagingSenderId: "285481914024",
+      appId: "1:285481914024:web:4efcca9a9c476fec9f3c9d"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    function login() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      auth.signInWithEmailAndPassword(email, password)
+        .then(() => {
+          document.getElementById("login").style.display = "none";
+          document.getElementById("controls").style.display = "block";
+        })
+        .catch(err => alert(err.message));
+    }
+
+    function getLocation() {
+      return new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(
+          pos => resolve({
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude
+          }),
+          err => reject(err)
+        );
+      });
+    }
+
+    async function clockIn() {
+      const loc = await getLocation();
+      await db.collection("logs").add({
+        uid: auth.currentUser.uid,
+        type: "in",
+        time: new Date(),
+        location: loc
+      });
+      document.getElementById("status").innerText = "Clocked in ✔";
+    }
+
+    async function clockOut() {
+      const loc = await getLocation();
+      await db.collection("logs").add({
+        uid: auth.currentUser.uid,
+        type: "out",
+        time: new Date(),
+        location: loc
+      });
+      document.getElementById("status").innerText = "Clocked out ✔";
+    }
+  </script>
+
+</body>
+</html>
