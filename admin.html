@@ -155,6 +155,25 @@
     table.appendChild(row);
   }
 }
+
+async function exportCSV() {
+  const snapshot = await db.collection("logs")
+    .orderBy("time", "asc")
+    .get();
+
+  let csv = "Email,Action,Time\n";
+
+  snapshot.forEach(doc => {
+    const d = doc.data();
+    csv += `${d.uid},${d.type},${d.time.toDate().toLocaleString()}\n`;
+  });
+
+  const blob = new Blob([csv], { type: "text/csv" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "payroll.csv";
+  link.click();
+}
 </script>
 
 </body>
