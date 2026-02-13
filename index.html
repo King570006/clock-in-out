@@ -166,37 +166,58 @@ auth.onAuthStateChanged(user => {
 
     let lastAction = null;
 
-async function clockIn() {
-  if (lastAction === "in") {
-    document.getElementById("status").innerText = "Already clocked in";
-    return;
-  }
+let lastAction = null;
 
+async function clockIn() {
+  if (!auth.currentUser) return;
+  if (lastAction === "in") return;
+
+  const now = new Date();
   const loc = await getLocation();
+
+  // Write clock-in log
   await db.collection("logs").add({
     uid: auth.currentUser.uid,
     type: "in",
-    time: new Date(),
+    time: now,
     location: loc
   });
 
+  // ✅ THIS IS THE IMPORTANT PART
+  // This creates users/{uid} with a status field
+  await db.collection("users")
+    .doc(auth.currentUser.uid)
+    .set({
+      status: "in",
+      since: now
+    });
+
   lastAction = "in";
-  document.getElementById("status").innerText = "You are CLOCKED IN";
+  showClockedInUI(now.toLocaleTimeString());
 }
 
 async function clockOut() {
-  if (lastAction !== "in") {
-    document.getElementById("status").innerText = "You must clock in first";
-    return;
-  }
+  if (!auth.currentUser) return;
+  if (lastAction !== "in") return;
 
   const loc = await getLocation();
+
   await db.collection("logs").add({
     uid: auth.currentUser.uid,
     type: "out",
     time: new Date(),
     location: loc
   });
+
+  await db.collection("users")
+    .doc(auth.currentUser.uid)
+    .set({
+      status: "out"
+    });
+
+  lastAction = "out";
+  showClockedOutUI();
+}
 
   lastAction = "out";
   document.getElementById("status").innerText = "You are CLOCKED OUT";
