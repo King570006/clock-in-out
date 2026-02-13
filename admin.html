@@ -113,25 +113,44 @@
   }
 
   async function loadLogs() {
-    const table = document.getElementById("logsTable");
-    const snapshot = await db.collection("logs")
-      .orderBy("time", "desc")
-      .limit(50)
-      .get();
+  const table = document.getElementById("logsTable");
+  const snapshot = await db.collection("logs")
+    .orderBy("time", "asc")
+    .get();
 
-    snapshot.forEach(doc => {
-      const d = doc.data();
-      const row = document.createElement("tr");
+  const sessions = {};
+  
+  snapshot.forEach(doc => {
+    const d = doc.data();
+    if (!sessions[d.uid]) sessions[d.uid] = [];
+    sessions[d.uid].push(d);
+  });
 
-      row.innerHTML = `
-        <td>${d.uid}</td>
-        <td>${d.type}</td>
-        <td>${d.time.toDate().toLocaleString()}</td>
-      `;
+  for (const uid in sessions) {
+    const logs = sessions[uid];
+    let lastIn = null;
+    let totalMs = 0;
 
-      table.appendChild(row);
+    logs.forEach(log => {
+      if (log.type === "in") {
+        lastIn = log.time.toDate();
+      } else if (log.type === "out" && lastIn) {
+        totalMs += log.time.toDate() - lastIn;
+        lastIn = null;
+      }
     });
+
+    const hours = (totalMs / 3600000).toFixed(2);
+
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${uid}</td>
+      <td>${hours} hrs</td>
+      <td>Total</td>
+    `;
+    table.appendChild(row);
   }
+}
 </script>
 
 </body>
