@@ -1,275 +1,150 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Clock In / Out</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8">
+<title>Clock In / Out</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- Basic styling -->
 <style>
-  * {
-    box-sizing: border-box;
-  }
-
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    background: linear-gradient(180deg, #0f2027, #203a43, #2c5364);
-    color: #fff;
-    min-height: 100vh;
-    margin: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .card {
-    width: 100%;
-    max-width: 380px;
-    background: rgba(0,0,0,0.35);
-    backdrop-filter: blur(12px);
-    border-radius: 18px;
-    padding: 24px;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.5);
-  }
-
-  h1 {
-    text-align: center;
-    margin-bottom: 24px;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-  }
-
-  input {
-    width: 100%;
-    padding: 14px;
-    margin-bottom: 14px;
-    border-radius: 12px;
-    border: none;
-    font-size: 16px;
-    background: rgba(255,255,255,0.1);
-    color: #fff;
-  }
-
-  input::placeholder {
-    color: rgba(255,255,255,0.6);
-  }
-
-  button {
-    width: 100%;
-    padding: 16px;
-    border-radius: 14px;
-    border: none;
-    font-size: 17px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: transform 0.1s ease, opacity 0.1s ease;
-  }
-
-  button:active {
-    transform: scale(0.98);
-    opacity: 0.9;
-  }
-
-  button.primary {
-    background: #00e676;
-    color: #000;
-    margin-bottom: 12px;
-  }
-
-  button.secondary {
-    background: #ff5252;
-    color: #fff;
-  }
-
-  #controls {
-    display: none;
-  }
-
-  #status {
-    text-align: center;
-    margin-top: 14px;
-    font-size: 15px;
-    opacity: 0.85;
-  }
+body {
+  font-family: -apple-system, BlinkMacSystemFont;
+  background: linear-gradient(180deg,#0f2027,#203a43,#2c5364);
+  color:#fff;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  min-height:100vh;
+}
+.card {
+  width:100%;
+  max-width:360px;
+  background:rgba(0,0,0,.35);
+  padding:24px;
+  border-radius:16px;
+}
+button {
+  width:100%;
+  padding:14px;
+  border:none;
+  border-radius:12px;
+  font-weight:600;
+}
+.primary { background:#00e676; color:#000; }
+.secondary { background:#ff5252; color:#fff; }
+#controls { display:none; }
+#status { margin-top:12px; text-align:center; }
 </style>
 </head>
+
 <body>
+<div class="card">
+<h1>Clock In / Out</h1>
 
-  <div class="card">
-    <h1>Clock In / Out</h1>
+<div id="login">
+  <input id="email" placeholder="Email">
+  <input id="password" type="password" placeholder="Password">
+  <button onclick="login()">Login</button>
+</div>
 
-    <div id="login">
-      <input id="email" type="email" placeholder="Email" />
-      <input id="password" type="password" placeholder="Password" />
-      <button onclick="login()">Login</button>
-      
-    </div>
-
-    <div id="controls">
+<div id="controls">
   <button class="primary" onclick="clockIn()">Clock In</button>
   <button class="secondary" onclick="clockOut()">Clock Out</button>
   <div id="status"></div>
 </div>
 
-<!-- 👇 LOGOUT IS OUTSIDE CONTROLS -->
-<button id="logoutBtn"
-        onclick="logout()"
-        style="display:none;margin-top:12px;background:#555;color:#fff;width:100%;padding:12px;border-radius:12px;">
+<button id="logoutBtn" onclick="logout()" style="display:none;margin-top:12px;">
   Log out
 </button>
+</div>
 
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-  <script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyCnzBdlGPviltn6P8pID14lgkXHx6zQifA",
-    authDomain: "clock-in-out-56209.firebaseapp.com",
-    projectId: "clock-in-out-56209",
-    storageBucket: "clock-in-out-56209.appspot.com",
-    messagingSenderId: "285481914024",
-    appId: "1:285481914024:web:4efcca9a9c476fec9f3c9d"
-  };
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyCnzBdlGPviltn6P8pID14lgkXHx6zQifA",
+  authDomain: "clock-in-out-56209.firebaseapp.com",
+  projectId: "clock-in-out-56209",
+  storageBucket: "clock-in-out-56209.appspot.com",
+  messagingSenderId: "285481914024",
+  appId: "1:285481914024:web:4efcca9a9c476fec9f3c9d"
+};
 
-  firebase.initializeApp(firebaseConfig);
-  firebase.firestore().settings({ ignoreUndefinedProperties: true });
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
 
-  const auth = firebase.auth();
-  const db = firebase.firestore();
+function login() {
+  auth.signInWithEmailAndPassword(
+    email.value,
+    password.value
+  ).catch(e => alert(e.message));
+}
 
-  let lastAction = null;
-
-  function login() {
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
-
-    auth.signInWithEmailAndPassword(email, password)
-      .catch(err => alert(err.message));
-  }
-
-  auth.onAuthStateChanged(async user => {
-  if (user) {
-    alert("YOUR UID IS:\n\n" + user.uid);
-
-    document.getElementById("login").style.display = "none";
-    document.getElementById("controls").style.display = "block";
-    await loadUserStatus(user.uid);
-  } else {
-    document.getElementById("login").style.display = "block";
-    document.getElementById("controls").style.display = "none";
-  }
-});
-
-  function getLocation() {
-    return new Promise((resolve, reject) => {
-      navigator.geolocation.getCurrentPosition(
-        pos => resolve({
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude
-        }),
-        err => reject(err)
-      );
-    });
-  }
-
-  async function loadUserStatus(uid) {
-    const doc = await db.collection("users").doc(uid).get();
-    if (doc.exists && doc.data().status === "in") {
-      lastAction = "in";
-      showClockedInUI(doc.data().since.toDate().toLocaleTimeString());
-    } else {
-      lastAction = "out";
-      showClockedOutUI();
-    }
-  }
-
-  function showClockedInUI(time) {
-    document.querySelector(".primary").style.display = "none";
-    document.querySelector(".secondary").style.display = "block";
-    document.getElementById("status").innerText =
-      `You are CLOCKED IN since ${time}`;
-  }
-
-  function showClockedOutUI() {
-    document.querySelector(".primary").style.display = "block";
-    document.querySelector(".secondary").style.display = "none";
-    document.getElementById("status").innerText =
-      "You are CLOCKED OUT";
-  }
-
-  async function clockIn() {
-    if (!auth.currentUser || lastAction === "in") return;
-
-    const now = new Date();
-    const loc = await getLocation();
-
-    await db.collection("logs").add({
-      uid: auth.currentUser.uid,
-      type: "in",
-      time: now,
-      location: loc
-    });
-
-    await db.collection("users")
-  .doc(auth.currentUser.uid)
-  .set({
-    email: auth.currentUser.email,
-    status: "in",
-    since: now
-  }, { merge: true });
-
-    lastAction = "in";
-    showClockedInUI(now.toLocaleTimeString());
-  }
-
-    async function clockOut() {
-  if (!auth.currentUser) return;
-
-  const userDoc = await db
-    .collection("users")
-    .doc(auth.currentUser.uid)
-    .get();
-
-  if (!userDoc.exists || userDoc.data().status !== "in") {
-    document.getElementById("status").innerText =
-      "You are not clocked in";
+auth.onAuthStateChanged(async user => {
+  if (!user) {
+    login.style.display="block";
+    controls.style.display="none";
+    logoutBtn.style.display="none";
     return;
   }
 
-  const loc = await getLocation();
-  const now = new Date();
+  login.style.display="none";
+  controls.style.display="block";
+  logoutBtn.style.display="block";
 
-  // WRITE CLOCK-OUT LOG
-  await db.collection("logs").add({
-  uid: auth.currentUser.uid,
-  type: "out",
-  time: now,
-  readableTime: now.toLocaleString(),
-  action: "CLOCK_OUT",
-  location: loc
+  const doc = await db.collection("users").doc(user.uid).get();
+  if (doc.exists && doc.data().status==="in") {
+    showIn(doc.data().since.toDate().toLocaleTimeString());
+  } else {
+    showOut();
+  }
 });
 
-  // UPDATE USER STATUS
-  await db.collection("users")
-  .doc(auth.currentUser.uid)
-  .set({
-    email: auth.currentUser.email,
-    status: "out"
-  }, { merge: true });
-
-  lastAction = "out";
-  showClockedOutUI();
+function showIn(t){ 
+  document.querySelector(".primary").style.display="none";
+  document.querySelector(".secondary").style.display="block";
+  status.innerText=`CLOCKED IN since ${t}`;
+}
+function showOut(){
+  document.querySelector(".primary").style.display="block";
+  document.querySelector(".secondary").style.display="none";
+  status.innerText="CLOCKED OUT";
 }
 
-function logout() {
-  auth.signOut().then(() => {
-    location.reload();
+async function clockIn(){
+  const now=new Date();
+  await db.collection("logs").add({
+    uid:auth.currentUser.uid,
+    type:"in",
+    time:now
   });
+  await db.collection("users").doc(auth.currentUser.uid).set({
+    email:auth.currentUser.email,
+    status:"in",
+    since:now
+  },{merge:true});
+  showIn(now.toLocaleTimeString());
 }
 
-</script>
+async function clockOut(){
+  const now=new Date();
+  await db.collection("logs").add({
+    uid:auth.currentUser.uid,
+    type:"out",
+    time:now
+  });
+  await db.collection("users").doc(auth.currentUser.uid).set({
+    email:auth.currentUser.email,
+    status:"out"
+  },{merge:true});
+  showOut();
+}
 
+function logout(){
+  auth.signOut().then(()=>location.reload());
+}
+</script>
 </body>
 </html>
