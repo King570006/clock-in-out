@@ -117,112 +117,125 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
   <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyCnzBdlGPviltn6P8pID14lgkXHx6zQifA",
-      authDomain: "clock-in-out-56209.firebaseapp.com",
-      projectId: "clock-in-out-56209",
-      storageBucket: "clock-in-out-56209.appspot.com",
-      messagingSenderId: "285481914024",
-      appId: "1:285481914024:web:4efcca9a9c476fec9f3c9d"
-    };
+  const firebaseConfig = {
+    apiKey: "AIzaSyCnzBdlGPviltn6P8pID14lgkXHx6zQifA",
+    authDomain: "clock-in-out-56209.firebaseapp.com",
+    projectId: "clock-in-out-56209",
+    storageBucket: "clock-in-out-56209.appspot.com",
+    messagingSenderId: "285481914024",
+    appId: "1:285481914024:web:4efcca9a9c476fec9f3c9d"
+  };
 
-    firebase.initializeApp(firebaseConfig);
-    
-    firebase.firestore().settings({ ignoreUndefinedProperties: true });
+  firebase.initializeApp(firebaseConfig);
+  firebase.firestore().settings({ ignoreUndefinedProperties: true });
 
-    const auth = firebase.auth();
-    const db = firebase.firestore();
+  const auth = firebase.auth();
+  const db = firebase.firestore();
 
-    function login() {
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
+  let lastAction = null;
 
-  auth.signInWithEmailAndPassword(email, password)
-    .catch(err => alert(err.message));
-}
+  function login() {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
 
-auth.onAuthStateChanged(user => {
-  if (user) {
-    document.getElementById("login").style.display = "none";
-    document.getElementById("controls").style.display = "block";
-    document.getElementById("status").innerText = "Logged in";
-  } else {
-    document.getElementById("login").style.display = "block";
-    document.getElementById("controls").style.display = "none";
+    auth.signInWithEmailAndPassword(email, password)
+      .catch(err => alert(err.message));
   }
-});
 
-    function getLocation() {
-      return new Promise((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(
-          pos => resolve({
-            lat: pos.coords.latitude,
-            lng: pos.coords.longitude
-          }),
-          err => reject(err)
-        );
-      });
+  auth.onAuthStateChanged(async user => {
+    if (user) {
+      document.getElementById("login").style.display = "none";
+      document.getElementById("controls").style.display = "block";
+      await loadUserStatus(user.uid);
+    } else {
+      document.getElementById("login").style.display = "block";
+      document.getElementById("controls").style.display = "none";
     }
-
-    let lastAction = null;
-
-let lastAction = null;
-
-async function clockIn() {
-  if (!auth.currentUser) return;
-  if (lastAction === "in") return;
-
-  const now = new Date();
-  const loc = await getLocation();
-
-  // Write clock-in log
-  await db.collection("logs").add({
-    uid: auth.currentUser.uid,
-    type: "in",
-    time: now,
-    location: loc
   });
 
-  // ✅ THIS IS THE IMPORTANT PART
-  // This creates users/{uid} with a status field
-  await db.collection("users")
-    .doc(auth.currentUser.uid)
-    .set({
-      status: "in",
-      since: now
+  function getLocation() {
+    return new Promise((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition(
+        pos => resolve({
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude
+        }),
+        err => reject(err)
+      );
+    });
+  }
+
+  async function loadUserStatus(uid) {
+    const doc = await db.collection("users").doc(uid).get();
+    if (doc.exists && doc.data().status === "in") {
+      lastAction = "in";
+      showClockedInUI(doc.data().since.toDate().toLocaleTimeString());
+    } else {
+      lastAction = "out";
+      showClockedOutUI();
+    }
+  }
+
+  function showClockedInUI(time) {
+    document.querySelector(".primary").style.display = "none";
+    document.querySelector(".secondary").style.display = "block";
+    document.getElementById("status").innerText =
+      `You are CLOCKED IN since ${time}`;
+  }
+
+  function showClockedOutUI() {
+    document.querySelector(".primary").style.display = "block";
+    document.querySelector(".secondary").style.display = "none";
+    document.getElementById("status").innerText =
+      "You are CLOCKED OUT";
+  }
+
+  async function clockIn() {
+    if (!auth.currentUser || lastAction === "in") return;
+
+    const now = new Date();
+    const loc = await getLocation();
+
+    await db.collection("logs").add({
+      uid: auth.currentUser.uid,
+      type: "in",
+      time: now,
+      location: loc
     });
 
-  lastAction = "in";
-  showClockedInUI(now.toLocaleTimeString());
-}
+    await db.collection("users")
+      .doc(auth.currentUser.uid)
+      .set({
+        status: "in",
+        since: now
+      });
 
-async function clockOut() {
-  if (!auth.currentUser) return;
-  if (lastAction !== "in") return;
+    lastAction = "in";
+    showClockedInUI(now.toLocaleTimeString());
+  }
 
-  const loc = await getLocation();
+  async function clockOut() {
+    if (!auth.currentUser || lastAction !== "in") return;
 
-  await db.collection("logs").add({
-    uid: auth.currentUser.uid,
-    type: "out",
-    time: new Date(),
-    location: loc
-  });
+    const loc = await getLocation();
 
-  await db.collection("users")
-    .doc(auth.currentUser.uid)
-    .set({
-      status: "out"
+    await db.collection("logs").add({
+      uid: auth.currentUser.uid,
+      type: "out",
+      time: new Date(),
+      location: loc
     });
 
-  lastAction = "out";
-  showClockedOutUI();
-}
+    await db.collection("users")
+      .doc(auth.currentUser.uid)
+      .set({
+        status: "out"
+      });
 
-  lastAction = "out";
-  document.getElementById("status").innerText = "You are CLOCKED OUT";
-}
-  </script>
+    lastAction = "out";
+    showClockedOutUI();
+  }
+</script>
 
 </body>
 </html>
