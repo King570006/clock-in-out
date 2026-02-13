@@ -103,7 +103,7 @@
       const row = document.createElement("tr");
 
       row.innerHTML = `
-        <td>${doc.id}</td>
+        <td>${d.email || doc.id}</td>
         <td class="${d.status}">${d.status.toUpperCase()}</td>
         <td>${d.since ? d.since.toDate().toLocaleString() : "-"}</td>
       `;
