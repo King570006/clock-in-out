@@ -215,26 +215,42 @@
   }
 
   async function clockOut() {
-    if (!auth.currentUser || lastAction !== "in") return;
+    async function clockOut() {
+  if (!auth.currentUser) return;
 
-    const loc = await getLocation();
+  // 🔥 Check Firestore, not just local state
+  const userDoc = await db
+    .collection("users")
+    .doc(auth.currentUser.uid)
+    .get();
 
-    await db.collection("logs").add({
-      uid: auth.currentUser.uid,
-      type: "out",
-      time: new Date(),
-      location: loc
+  if (!userDoc.exists || userDoc.data().status !== "in") {
+    document.getElementById("status").innerText =
+      "You are not clocked in";
+    return;
+  }
+
+  const loc = await getLocation();
+  const now = new Date();
+
+  // ✅ WRITE CLOCK-OUT LOG
+  await db.collection("logs").add({
+    uid: auth.currentUser.uid,
+    type: "out",
+    time: now,
+    location: loc
+  });
+
+  // ✅ UPDATE USER STATUS
+  await db.collection("users")
+    .doc(auth.currentUser.uid)
+    .set({
+      status: "out"
     });
 
-    await db.collection("users")
-      .doc(auth.currentUser.uid)
-      .set({
-        status: "out"
-      });
-
-    lastAction = "out";
-    showClockedOutUI();
-  }
+  lastAction = "out";
+  showClockedOutUI();
+}
 </script>
 
 </body>
