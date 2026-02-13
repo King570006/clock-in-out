@@ -13,38 +13,35 @@
       margin: 0;
       padding: 16px;
     }
-
-    h1 {
+    h1, h2 {
+      margin-bottom: 12px;
+    }
+    button {
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: none;
+      font-weight: 600;
       margin-bottom: 16px;
     }
-
     table {
       width: 100%;
       border-collapse: collapse;
       margin-bottom: 32px;
     }
-
     th, td {
       padding: 10px;
       border-bottom: 1px solid rgba(255,255,255,0.2);
-      text-align: left;
       font-size: 14px;
     }
-
-    .in {
-      color: #00e676;
-      font-weight: 600;
-    }
-
-    .out {
-      color: #ff5252;
-      font-weight: 600;
-    }
+    .in { color: #00e676; }
+    .out { color: #ff5252; }
   </style>
 </head>
 <body>
 
 <h1>Admin Dashboard</h1>
+
+<button onclick="exportCSV()">Export Payroll CSV</button>
 
 <h2>Current Workers</h2>
 <table id="usersTable">
@@ -64,115 +61,80 @@
   </tr>
 </table>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyCnzBdlGPviltn6P8pID14lgkXHx6zQifA",
-    authDomain: "clock-in-out-56209.firebaseapp.com",
-    projectId: "clock-in-out-56209",
-    storageBucket: "clock-in-out-56209.appspot.com",
-    messagingSenderId: "285481914024",
-    appId: "1:285481914024:web:4efcca9a9c476fec9f3c9d"
-  };
+const firebaseConfig = {
+  apiKey: "AIzaSyCnzBdlGPviltn6P8pID14lgkXHx6zQifA",
+  authDomain: "clock-in-out-56209.firebaseapp.com",
+  projectId: "clock-in-out-56209",
+  storageBucket: "clock-in-out-56209.appspot.com",
+  messagingSenderId: "285481914024",
+  appId: "1:285481914024:web:4efcca9a9c476fec9f3c9d"
+};
 
-  firebase.initializeApp(firebaseConfig);
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
 
-  const auth = firebase.auth();
-  const db = firebase.firestore();
-
-  auth.onAuthStateChanged(user => {
-    if (!user) {
-      alert("Admin login required");
-      location.href = "index.html";
-    } else {
-      loadUsers();
-      loadLogs();
-    }
-  });
-
-  async function loadUsers() {
-    const table = document.getElementById("usersTable");
-    const snapshot = await db.collection("users").get();
-
-    snapshot.forEach(doc => {
-      const d = doc.data();
-      const row = document.createElement("tr");
-
-      row.innerHTML = `
-        <td>${d.email || doc.id}</td>
-        <td class="${d.status}">${d.status.toUpperCase()}</td>
-        <td>${d.since ? d.since.toDate().toLocaleString() : "-"}</td>
-      `;
-
-      table.appendChild(row);
-    });
+auth.onAuthStateChanged(user => {
+  if (!user) {
+    alert("Admin login required");
+    location.href = "index.html";
+    return;
   }
+  loadUsers();
+  loadLogs();
+});
 
-<button onclick="exportCSV()" style="margin-bottom:16px;">
-  Export Payroll CSV
-</button>
+async function loadUsers() {
+  const table = document.getElementById("usersTable");
+  const snap = await db.collection("users").get();
 
-  async function loadLogs() {
-  const table = document.getElementById("logsTable");
-  const snapshot = await db.collection("logs")
-    .orderBy("time", "asc")
-    .get();
-
-  const sessions = {};
-  
-  snapshot.forEach(doc => {
+  snap.forEach(doc => {
     const d = doc.data();
-    if (!sessions[d.uid]) sessions[d.uid] = [];
-    sessions[d.uid].push(d);
-  });
-
-  for (const uid in sessions) {
-    const logs = sessions[uid];
-    let lastIn = null;
-    let totalMs = 0;
-
-    logs.forEach(log => {
-      if (log.type === "in") {
-        lastIn = log.time.toDate();
-      } else if (log.type === "out" && lastIn) {
-        totalMs += log.time.toDate() - lastIn;
-        lastIn = null;
-      }
-    });
-
-    const hours = (totalMs / 3600000).toFixed(2);
-
     const row = document.createElement("tr");
     row.innerHTML = `
-      <td>${uid}</td>
-      <td>${hours} hrs</td>
-      <td>Total</td>
+      <td>${d.email || doc.id}</td>
+      <td class="${d.status}">${d.status?.toUpperCase() || "-"}</td>
+      <td>${d.since ? d.since.toDate().toLocaleString() : "-"}</td>
     `;
     table.appendChild(row);
-  }
+  });
+}
+
+async function loadLogs() {
+  const table = document.getElementById("logsTable");
+  const snap = await db.collection("logs").orderBy("time", "desc").limit(100).get();
+
+  snap.forEach(doc => {
+    const d = doc.data();
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${d.uid}</td>
+      <td>${d.type}</td>
+      <td>${d.time.toDate().toLocaleString()}</td>
+    `;
+    table.appendChild(row);
+  });
 }
 
 async function exportCSV() {
-  const snapshot = await db.collection("logs")
-    .orderBy("time", "asc")
-    .get();
+  const snap = await db.collection("logs").orderBy("time", "asc").get();
+  let csv = "UID,Action,Time\n";
 
-  let csv = "Email,Action,Time\n";
-
-  snapshot.forEach(doc => {
+  snap.forEach(doc => {
     const d = doc.data();
     csv += `${d.uid},${d.type},${d.time.toDate().toLocaleString()}\n`;
   });
 
   const blob = new Blob([csv], { type: "text/csv" });
-  const link = document.createElement("a");
-  link.href = URL.createObjectURL(blob);
-  link.download = "payroll.csv";
-  link.click();
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "payroll.csv";
+  a.click();
 }
 </script>
 
