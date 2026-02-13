@@ -102,6 +102,10 @@
       <input id="email" type="email" placeholder="Email" />
       <input id="password" type="password" placeholder="Password" />
       <button onclick="login()">Login</button>
+      
+      <button onclick="logout()" style="margin-top:12px;background:#555;color:#fff;">
+  Log out
+</button>
     </div>
 
     <div id="controls">
@@ -253,6 +257,13 @@
   lastAction = "out";
   showClockedOutUI();
 }
+
+function logout() {
+  auth.signOut().then(() => {
+    location.reload();
+  });
+}
+
 </script>
 
 </body>
