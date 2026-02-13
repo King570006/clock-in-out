@@ -90,28 +90,40 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
+const emailInput = document.getElementById("email");
+const passwordInput = document.getElementById("password");
+const loginBox = document.getElementById("login");
+const controlsBox = document.getElementById("controls");
+const statusText = document.getElementById("status");
+const logoutBtn = document.getElementById("logoutBtn");
 
 function login() {
-  auth.signInWithEmailAndPassword(
-    email.value,
-    password.value
-  ).catch(e => alert(e.message));
+  const email = emailInput.value.trim();
+  const password = passwordInput.value.trim();
+
+  if (!email || !password) {
+    alert("Enter email and password");
+    return;
+  }
+
+  auth.signInWithEmailAndPassword(email, password)
+    .catch(e => alert(e.message));
 }
 
 auth.onAuthStateChanged(async user => {
   if (!user) {
-    login.style.display="block";
-    controls.style.display="none";
-    logoutBtn.style.display="none";
+    loginBox.style.display = "block";
+    controlsBox.style.display = "none";
+    logoutBtn.style.display = "none";
     return;
   }
 
-  login.style.display="none";
-  controls.style.display="block";
-  logoutBtn.style.display="block";
+  loginBox.style.display = "none";
+  controlsBox.style.display = "block";
+  logoutBtn.style.display = "block";
 
   const doc = await db.collection("users").doc(user.uid).get();
-  if (doc.exists && doc.data().status==="in") {
+  if (doc.exists && doc.data().status === "in") {
     showIn(doc.data().since.toDate().toLocaleTimeString());
   } else {
     showOut();
