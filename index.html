@@ -106,14 +106,17 @@
     </div>
 
     <div id="controls">
-      <button class="primary" onclick="clockIn()">Clock In</button>
-<button class="secondary" onclick="clockOut()">Clock Out</button>
-<button onclick="logout()" style="margin-top:12px;background:#555;color:#fff;">
+  <button class="primary" onclick="clockIn()">Clock In</button>
+  <button class="secondary" onclick="clockOut()">Clock Out</button>
+  <div id="status"></div>
+</div>
+
+<!-- 👇 LOGOUT IS OUTSIDE CONTROLS -->
+<button id="logoutBtn"
+        onclick="logout()"
+        style="display:none;margin-top:12px;background:#555;color:#fff;width:100%;padding:12px;border-radius:12px;">
   Log out
 </button>
-      <div id="status"></div>
-    </div>
-  </div>
 
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
