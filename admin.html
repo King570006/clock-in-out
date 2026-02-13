@@ -112,6 +112,10 @@
     });
   }
 
+<button onclick="exportCSV()" style="margin-bottom:16px;">
+  Export Payroll CSV
+</button>
+
   async function loadLogs() {
   const table = document.getElementById("logsTable");
   const snapshot = await db.collection("logs")
