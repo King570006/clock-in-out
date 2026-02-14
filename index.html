@@ -178,9 +178,6 @@ auth.onAuthStateChanged(async user => {
   }
 });
 
-  loginBox.style.display = "none";
-  controlsBox.style.display = "block";
-  logoutBtn.style.display = "block";
 
   const doc = await db.collection("users").doc(user.uid).get();
   if (doc.exists && doc.data().status === "in") {
