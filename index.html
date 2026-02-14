@@ -65,6 +65,18 @@ input {
   padding: 14px;
   border-radius: 12px;
 }
+
+input {
+  box-sizing: border-box;
+  height: 48px;
+  line-height: 20px;
+}
+
+input:-webkit-autofill {
+  -webkit-text-fill-color: #000;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
 </style>
 </head>
 
@@ -137,7 +149,6 @@ const db = firebase.firestore();
 const emailInput = document.getElementById("email");
 const passwordInput = document.getElementById("password");
 const loginBox = document.getElementById("login");
-const controlsBox = document.getElementById("controls");
 const statusText = document.getElementById("status");
 const logoutBtn = document.getElementById("logoutBtn");
 
