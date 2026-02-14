@@ -15,6 +15,7 @@ body {
   align-items:center;
   min-height:100vh;
 }
+
 .card {
   width:100%;
   max-width:360px;
@@ -24,18 +25,14 @@ body {
   position: relative;
 }
 
-.card {
-  position: relative;
-}
-
 #menuBtn {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  background: none;
-  border: none;
-  font-size: 22px;
-  color: white;
+  position:absolute;
+  top:16px;
+  right:16px;
+  background:none;
+  border:none;
+  font-size:22px;
+  color:white;
 }
 
 button {
@@ -45,38 +42,25 @@ button {
   border-radius:12px;
   font-weight:600;
 }
+
 .primary { background:#00e676; color:#000; }
 .secondary { background:#ff5252; color:#fff; }
-#controls { display:none; }
-#status { margin-top:12px; text-align:center; }
 
 input {
-  width: 100%;
-  display: block;
-  padding: 14px;
-  margin-bottom: 12px;
-  border-radius: 12px;
-  border: none;
-  font-size: 16px;
+  width:100%;
+  height:48px;
+  padding:14px;
+  margin-bottom:12px;
+  border-radius:12px;
+  border:none;
+  font-size:16px;
+  box-sizing:border-box;
 }
 
-#login button {
-  width: 100%;
-  padding: 14px;
-  border-radius: 12px;
+#status {
+  margin-top:12px;
+  text-align:center;
 }
-
-input {
-  box-sizing: border-box;
-  height: 48px;
-  line-height: 20px;
-}
-
-input:-webkit-autofill {
-  -webkit-text-fill-color: #000;
-  transition: background-color 5000s ease-in-out 0s;
-}
-
 </style>
 </head>
 
@@ -84,19 +68,19 @@ input:-webkit-autofill {
 <div class="card">
   <h1>Clock In / Out</h1>
 
-  <!-- LOGIN ONLY -->
+  <!-- LOGIN -->
   <div id="login">
     <input id="email" type="email" placeholder="Email">
     <input id="password" type="password" placeholder="Password">
     <button onclick="login()">Login</button>
   </div>
 
-  <!-- LOGGED-IN ONLY -->
+  <!-- APP -->
   <div id="app" style="display:none;">
 
     <button id="menuBtn" onclick="toggleMenu()">☰</button>
 
-    <div id="menu" style="display:none;">
+    <div id="menu" style="display:none;margin-bottom:16px;">
       <p><strong>Account:</strong> <span id="userEmail"></span></p>
       <p><strong>Hourly Rate:</strong> $<span id="rate"></span>/hr</p>
       <p><strong>Total Hours:</strong> <span id="totalHours"></span></p>
@@ -110,12 +94,12 @@ input:-webkit-autofill {
       <div id="status"></div>
     </div>
 
-    <div id="history">
+    <div id="history" style="margin-top:20px;">
       <h3>Work History</h3>
       <div id="historyList"></div>
     </div>
 
-    <div id="requestBox" style="display:none;">
+    <div id="requestBox" style="display:none;margin-top:16px;">
       <h3>Request Time Change</h3>
       <input type="date" id="reqDate">
       <input type="time" id="reqIn">
@@ -124,8 +108,7 @@ input:-webkit-autofill {
       <button onclick="submitRequest()">Submit Request</button>
     </div>
 
-    <button id="logoutBtn" onclick="logout()">Log out</button>
-
+    <button onclick="logout()" style="margin-top:16px;">Log out</button>
   </div>
 </div>
 
@@ -134,38 +117,27 @@ input:-webkit-autofill {
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <script>
-const firebaseConfig = {
+firebase.initializeApp({
   apiKey: "AIzaSyCnzBdlGPviltn6P8pID14lgkXHx6zQifA",
   authDomain: "clock-in-out-56209.firebaseapp.com",
-  projectId: "clock-in-out-56209",
-  storageBucket: "clock-in-out-56209.appspot.com",
-  messagingSenderId: "285481914024",
-  appId: "1:285481914024:web:4efcca9a9c476fec9f3c9d"
-};
+  projectId: "clock-in-out-56209"
+});
 
-firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
-const emailInput = document.getElementById("email");
-const passwordInput = document.getElementById("password");
+
 const loginBox = document.getElementById("login");
+const appBox = document.getElementById("app");
 const statusText = document.getElementById("status");
-const logoutBtn = document.getElementById("logoutBtn");
+
+let hourlyRate = 20;
 
 function login() {
-  const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value.trim();
-
-  if (!email || !password) {
-    alert("Enter email and password");
-    return;
-  }
-
-  auth.signInWithEmailAndPassword(email, password)
-    .catch(e => alert(e.message));
+  const email = email.value.trim();
+  const password = password.value.trim();
+  if (!email || !password) return alert("Enter email and password");
+  auth.signInWithEmailAndPassword(email, password).catch(e => alert(e.message));
 }
-
-const appBox = document.getElementById("app");
 
 auth.onAuthStateChanged(async user => {
   if (!user) {
@@ -177,23 +149,27 @@ auth.onAuthStateChanged(async user => {
   loginBox.style.display = "none";
   appBox.style.display = "block";
 
+  document.getElementById("menu").style.display = "none";
+  document.getElementById("requestBox").style.display = "none";
   document.getElementById("userEmail").innerText = user.email;
+  document.getElementById("rate").innerText = hourlyRate.toFixed(2);
 
-  loadEmployeeData(user);
+  await loadEmployeeData(user);
 
   const doc = await db.collection("users").doc(user.uid).get();
   if (doc.exists && doc.data().status === "in") {
-    showIn(doc.data().since.toDate().toLocaleTimeString());
+    showIn(doc.data().since.toDate());
   } else {
     showOut();
   }
 });
 
-function showIn(t){ 
+function showIn(time){
   document.querySelector(".primary").style.display="none";
   document.querySelector(".secondary").style.display="block";
-  statusText.innerText = `CLOCKED IN since ${t}`;
+  statusText.innerText = `CLOCKED IN since ${time.toLocaleTimeString()}`;
 }
+
 function showOut(){
   document.querySelector(".primary").style.display="block";
   document.querySelector(".secondary").style.display="none";
@@ -201,31 +177,18 @@ function showOut(){
 }
 
 async function clockIn(){
-  const now=new Date();
-  await db.collection("logs").add({
-    uid:auth.currentUser.uid,
-    type:"in",
-    time:now
-  });
-  await db.collection("users").doc(auth.currentUser.uid).set({
-    email:auth.currentUser.email,
-    status:"in",
-    since:now
-  },{merge:true});
-  showIn(now.toLocaleTimeString());
+  const now = new Date();
+  await db.collection("logs").add({ uid:auth.currentUser.uid, type:"in", time:now });
+  await db.collection("users").doc(auth.currentUser.uid)
+    .set({ email:auth.currentUser.email, status:"in", since:now },{merge:true});
+  showIn(now);
 }
 
 async function clockOut(){
-  const now=new Date();
-  await db.collection("logs").add({
-    uid:auth.currentUser.uid,
-    type:"out",
-    time:now
-  });
-  await db.collection("users").doc(auth.currentUser.uid).set({
-    email:auth.currentUser.email,
-    status:"out"
-  },{merge:true});
+  const now = new Date();
+  await db.collection("logs").add({ uid:auth.currentUser.uid, type:"out", time:now });
+  await db.collection("users").doc(auth.currentUser.uid)
+    .set({ email:auth.currentUser.email, status:"out" },{merge:true});
   showOut();
 }
 
@@ -233,96 +196,78 @@ function logout(){
   auth.signOut().then(()=>location.reload());
 }
 
-let hourlyRate = 20; // change later or store per-user
-
-function toggleMenu() {
+function toggleMenu(){
   const m = document.getElementById("menu");
-  m.style.display = m.style.display === "none" ? "block" : "none";
+  m.style.display = m.style.display==="none" ? "block" : "none";
 }
 
-function openRequest() {
-  document.getElementById("requestBox").style.display = "block";
+function openRequest(){
+  document.getElementById("requestBox").style.display="block";
 }
 
-async function loadEmployeeData(user) {
-  document.getElementById("userEmail").innerText = user.email;
-  document.getElementById("rate").innerText = hourlyRate.toFixed(2);
-
+async function loadEmployeeData(user){
   const snap = await db.collection("logs")
-    .where("uid", "==", user.uid)
-    .orderBy("time")
-    .get();
+    .where("uid","==",user.uid)
+    .orderBy("time").get();
 
   const days = {};
   let totalMs = 0;
   let lastIn = null;
 
-  snap.forEach(doc => {
-    const d = doc.data();
-    const date = d.time.toDate().toDateString();
+  snap.forEach(d=>{
+    const log=d.data();
+    const day=log.time.toDate().toDateString();
+    if(!days[day]) days[day]=[];
+    days[day].push(log);
 
-    if (!days[date]) days[date] = [];
-    days[date].push(d);
-
-    if (d.type === "in") lastIn = d.time.toDate();
-    if (d.type === "out" && lastIn) {
-      totalMs += d.time.toDate() - lastIn;
-      lastIn = null;
+    if(log.type==="in") lastIn=log.time.toDate();
+    if(log.type==="out" && lastIn){
+      totalMs += log.time.toDate() - lastIn;
+      lastIn=null;
     }
   });
 
-  const hours = totalMs / 3600000;
+  const hours = totalMs/3600000;
   document.getElementById("totalHours").innerText = hours.toFixed(2);
-  document.getElementById("totalPay").innerText = (hours * hourlyRate).toFixed(2);
+  document.getElementById("totalPay").innerText = (hours*hourlyRate).toFixed(2);
 
   renderHistory(days);
 }
 
-function renderHistory(days) {
-  const box = document.getElementById("historyList");
-  box.innerHTML = "";
-
-  for (const day in days) {
-    const dayDiv = document.createElement("div");
-    dayDiv.innerHTML = `<strong>${day}</strong>`;
-
-    let lastIn = null;
-
-    days[day].forEach(log => {
-      if (log.type === "in") {
-        lastIn = log.time.toDate();
-      } else if (log.type === "out" && lastIn) {
-        const out = log.time.toDate();
-        const hrs = ((out - lastIn) / 3600000).toFixed(2);
-        dayDiv.innerHTML += `
-          <div style="margin-left:12px;">
-            ${lastIn.toLocaleTimeString()} → ${out.toLocaleTimeString()}
-            (${hrs} hrs)
-          </div>`;
-        lastIn = null;
+function renderHistory(days){
+  const box=document.getElementById("historyList");
+  box.innerHTML="";
+  for(const d in days){
+    const div=document.createElement("div");
+    div.innerHTML=`<strong>${d}</strong>`;
+    let lastIn=null;
+    days[d].forEach(l=>{
+      if(l.type==="in") lastIn=l.time.toDate();
+      if(l.type==="out" && lastIn){
+        const out=l.time.toDate();
+        div.innerHTML+=`<div style="margin-left:12px;">
+          ${lastIn.toLocaleTimeString()} → ${out.toLocaleTimeString()}
+        </div>`;
+        lastIn=null;
       }
     });
-
-    box.appendChild(dayDiv);
+    box.appendChild(div);
   }
 }
 
-async function submitRequest() {
-  const user = auth.currentUser;
-  if (!user) return;
-
+async function submitRequest(){
+  const u=auth.currentUser;
+  if(!u) return;
   await db.collection("requests").add({
-    uid: user.uid,
-    email: user.email,
-    date: reqDate.value,
-    clockIn: reqIn.value,
-    clockOut: reqOut.value,
-    reason: reqReason.value,
-    createdAt: new Date()
+    uid:u.uid,email:u.email,
+    date:reqDate.value,
+    clockIn:reqIn.value,
+    clockOut:reqOut.value,
+    reason:reqReason.value,
+    createdAt:new Date()
   });
-
   alert("Request submitted");
-  document.getElementById("requestBox").style.display = "none";
+  document.getElementById("requestBox").style.display="none";
 }
 </script>
 </body>
