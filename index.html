@@ -2,114 +2,167 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Clock In / Out</title>
+<title>Clock In</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
+:root {
+  --bg1:#0f2027;
+  --bg2:#203a43;
+  --bg3:#2c5364;
+  --card:#101820ee;
+  --accent:#00e676;
+  --danger:#ff5252;
+}
+
+* { box-sizing:border-box; }
+
 body {
-  font-family: -apple-system, BlinkMacSystemFont;
-  background: linear-gradient(180deg,#0f2027,#203a43,#2c5364);
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont;
+  background:linear-gradient(180deg,var(--bg1),var(--bg2),var(--bg3));
   color:#fff;
-  display:flex;
-  justify-content:center;
-  align-items:center;
   min-height:100vh;
 }
 
-.card {
-  width:100%;
-  max-width:360px;
-  background:rgba(0,0,0,.35);
-  padding:24px;
-  border-radius:16px;
-  position: relative;
+/* ---------- LAYOUT ---------- */
+#loginScreen,
+#appScreen {
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  padding:20px;
 }
 
-#menuBtn {
-  position:absolute;
-  top:16px;
-  right:16px;
-  background:none;
-  border:none;
-  font-size:22px;
-  color:white;
-}
+.hidden { display:none; }
 
-button {
-  width:100%;
-  padding:14px;
-  border:none;
-  border-radius:12px;
-  font-weight:600;
+/* ---------- LOGIN ---------- */
+#loginBox {
+  margin:auto;
+  max-width:420px;
+  background:var(--card);
+  padding:28px;
+  border-radius:18px;
 }
-
-.primary { background:#00e676; color:#000; }
-.secondary { background:#ff5252; color:#fff; }
 
 input {
   width:100%;
   height:48px;
-  padding:14px;
-  margin-bottom:12px;
+  padding:12px;
+  margin-bottom:14px;
   border-radius:12px;
   border:none;
   font-size:16px;
-  box-sizing:border-box;
+}
+
+button {
+  width:100%;
+  height:48px;
+  border:none;
+  border-radius:14px;
+  font-size:16px;
+  font-weight:600;
+}
+
+.primary { background:var(--accent); color:#000; }
+.secondary { background:var(--danger); color:#fff; }
+
+/* ---------- APP HEADER ---------- */
+header {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:16px;
+}
+
+#menuBtn {
+  background:none;
+  border:none;
+  color:white;
+  font-size:24px;
+}
+
+/* ---------- MENU ---------- */
+#menu {
+  background:var(--card);
+  border-radius:16px;
+  padding:16px;
+  margin-bottom:16px;
+}
+
+/* ---------- CLOCK ---------- */
+#clockBox {
+  background:var(--card);
+  padding:16px;
+  border-radius:16px;
+  margin-bottom:16px;
 }
 
 #status {
-  margin-top:12px;
   text-align:center;
+  margin-top:8px;
+  opacity:.8;
+}
+
+/* ---------- HISTORY ---------- */
+#history {
+  background:var(--card);
+  border-radius:16px;
+  padding:16px;
+}
+
+.day {
+  margin-bottom:14px;
+}
+
+.pair {
+  margin-left:12px;
+  font-size:14px;
+  opacity:.9;
 }
 </style>
 </head>
 
 <body>
-<div class="card">
-  <h1>Clock In / Out</h1>
 
-  <!-- LOGIN -->
-  <div id="login">
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div id="loginBox">
+    <h2>Clock In</h2>
     <input id="email" type="email" placeholder="Email">
     <input id="password" type="password" placeholder="Password">
-    <button onclick="login()">Login</button>
+    <button class="primary" onclick="login()">Login</button>
   </div>
+</div>
 
-  <!-- APP -->
-  <div id="app" style="display:none;">
+<!-- APP -->
+<div id="appScreen" class="hidden">
 
+  <header>
+    <h2>Clock In</h2>
     <button id="menuBtn" onclick="toggleMenu()">☰</button>
+  </header>
 
-    <div id="menu" style="display:none;margin-bottom:16px;">
-      <p><strong>Account:</strong> <span id="userEmail"></span></p>
-      <p><strong>Hourly Rate:</strong> $<span id="rate"></span>/hr</p>
-      <p><strong>Total Hours:</strong> <span id="totalHours"></span></p>
-      <p><strong>Total Earned:</strong> $<span id="totalPay"></span></p>
-      <button onclick="openRequest()">Request Time Change</button>
-    </div>
-
-    <div id="controls">
-      <button class="primary" onclick="clockIn()">Clock In</button>
-      <button class="secondary" onclick="clockOut()">Clock Out</button>
-      <div id="status"></div>
-    </div>
-
-    <div id="history" style="margin-top:20px;">
-      <h3>Work History</h3>
-      <div id="historyList"></div>
-    </div>
-
-    <div id="requestBox" style="display:none;margin-top:16px;">
-      <h3>Request Time Change</h3>
-      <input type="date" id="reqDate">
-      <input type="time" id="reqIn">
-      <input type="time" id="reqOut">
-      <input type="text" id="reqReason" placeholder="Reason">
-      <button onclick="submitRequest()">Submit Request</button>
-    </div>
-
-    <button onclick="logout()" style="margin-top:16px;">Log out</button>
+  <div id="menu" class="hidden">
+    <p><strong>Account:</strong> <span id="userEmail"></span></p>
+    <p><strong>Rate:</strong> $<span id="rate"></span>/hr</p>
+    <p><strong>Total Hours:</strong> <span id="totalHours"></span></p>
+    <p><strong>Total Earned:</strong> $<span id="totalPay"></span></p>
+    <button onclick="openRequest()">Request Time Change</button>
   </div>
+
+  <div id="clockBox">
+    <button id="clockInBtn" class="primary" onclick="clockIn()">Clock In</button>
+    <button id="clockOutBtn" class="secondary hidden" onclick="clockOut()">Clock Out</button>
+    <div id="status"></div>
+  </div>
+
+  <div id="history">
+    <h3>Work History</h3>
+    <div id="historyList"></div>
+  </div>
+
+  <button style="margin-top:16px;" onclick="logout()">Log out</button>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -118,156 +171,125 @@ input {
 
 <script>
 firebase.initializeApp({
-  apiKey: "AIzaSyCnzBdlGPviltn6P8pID14lgkXHx6zQifA",
-  authDomain: "clock-in-out-56209.firebaseapp.com",
-  projectId: "clock-in-out-56209"
+  apiKey:"AIzaSyCnzBdlGPviltn6P8pID14lgkXHx6zQifA",
+  authDomain:"clock-in-out-56209.firebaseapp.com",
+  projectId:"clock-in-out-56209"
 });
 
-const auth = firebase.auth();
-const db = firebase.firestore();
+const auth=firebase.auth();
+const db=firebase.firestore();
+const hourlyRate=20;
 
-const loginBox = document.getElementById("login");
-const appBox = document.getElementById("app");
-const statusText = document.getElementById("status");
-
-let hourlyRate = 20;
-
-function login() {
-  const email = email.value.trim();
-  const password = password.value.trim();
-  if (!email || !password) return alert("Enter email and password");
-  auth.signInWithEmailAndPassword(email, password).catch(e => alert(e.message));
+/* ---------- AUTH ---------- */
+function login(){
+  auth.signInWithEmailAndPassword(
+    email.value.trim(),
+    password.value.trim()
+  ).catch(e=>alert(e.message));
 }
 
-auth.onAuthStateChanged(async user => {
-  if (!user) {
-    loginBox.style.display = "block";
-    appBox.style.display = "none";
+auth.onAuthStateChanged(async user=>{
+  if(!user){
+    loginScreen.classList.remove("hidden");
+    appScreen.classList.add("hidden");
     return;
   }
 
-  loginBox.style.display = "none";
-  appBox.style.display = "block";
+  loginScreen.classList.add("hidden");
+  appScreen.classList.remove("hidden");
 
-  document.getElementById("menu").style.display = "none";
-  document.getElementById("requestBox").style.display = "none";
-  document.getElementById("userEmail").innerText = user.email;
-  document.getElementById("rate").innerText = hourlyRate.toFixed(2);
+  userEmail.innerText=user.email;
+  rate.innerText=hourlyRate.toFixed(2);
 
-  await loadEmployeeData(user);
-
-  const doc = await db.collection("users").doc(user.uid).get();
-  if (doc.exists && doc.data().status === "in") {
-    showIn(doc.data().since.toDate());
-  } else {
-    showOut();
-  }
+  await loadData(user);
 });
 
-function showIn(time){
-  document.querySelector(".primary").style.display="none";
-  document.querySelector(".secondary").style.display="block";
-  statusText.innerText = `CLOCKED IN since ${time.toLocaleTimeString()}`;
+/* ---------- CLOCK ---------- */
+function showIn(t){
+  clockInBtn.classList.add("hidden");
+  clockOutBtn.classList.remove("hidden");
+  status.innerText=`Clocked in at ${t.toLocaleTimeString()}`;
 }
 
 function showOut(){
-  document.querySelector(".primary").style.display="block";
-  document.querySelector(".secondary").style.display="none";
-  statusText.innerText = "CLOCKED OUT";
+  clockOutBtn.classList.add("hidden");
+  clockInBtn.classList.remove("hidden");
+  status.innerText="Clocked out";
 }
 
 async function clockIn(){
-  const now = new Date();
-  await db.collection("logs").add({ uid:auth.currentUser.uid, type:"in", time:now });
+  const now=new Date();
+  await db.collection("logs").add({uid:auth.currentUser.uid,type:"in",time:now});
   await db.collection("users").doc(auth.currentUser.uid)
-    .set({ email:auth.currentUser.email, status:"in", since:now },{merge:true});
+    .set({status:"in",since:now},{merge:true});
   showIn(now);
 }
 
 async function clockOut(){
-  const now = new Date();
-  await db.collection("logs").add({ uid:auth.currentUser.uid, type:"out", time:now });
+  const now=new Date();
+  await db.collection("logs").add({uid:auth.currentUser.uid,type:"out",time:now});
   await db.collection("users").doc(auth.currentUser.uid)
-    .set({ email:auth.currentUser.email, status:"out" },{merge:true});
+    .set({status:"out"},{merge:true});
   showOut();
 }
 
-function logout(){
-  auth.signOut().then(()=>location.reload());
-}
-
+/* ---------- MENU ---------- */
 function toggleMenu(){
-  const m = document.getElementById("menu");
-  m.style.display = m.style.display==="none" ? "block" : "none";
+  menu.classList.toggle("hidden");
 }
 
-function openRequest(){
-  document.getElementById("requestBox").style.display="block";
+function logout(){
+  auth.signOut();
 }
 
-async function loadEmployeeData(user){
-  const snap = await db.collection("logs")
+/* ---------- DATA ---------- */
+async function loadData(user){
+  const snap=await db.collection("logs")
     .where("uid","==",user.uid)
     .orderBy("time").get();
 
-  const days = {};
-  let totalMs = 0;
-  let lastIn = null;
+  const days={};
+  let totalMs=0,lastIn=null;
 
   snap.forEach(d=>{
-    const log=d.data();
-    const day=log.time.toDate().toDateString();
+    const l=d.data();
+    const day=l.time.toDate().toDateString();
     if(!days[day]) days[day]=[];
-    days[day].push(log);
+    days[day].push(l);
 
-    if(log.type==="in") lastIn=log.time.toDate();
-    if(log.type==="out" && lastIn){
-      totalMs += log.time.toDate() - lastIn;
+    if(l.type==="in") lastIn=l.time.toDate();
+    if(l.type==="out" && lastIn){
+      totalMs+=l.time.toDate()-lastIn;
       lastIn=null;
     }
   });
 
-  const hours = totalMs/3600000;
-  document.getElementById("totalHours").innerText = hours.toFixed(2);
-  document.getElementById("totalPay").innerText = (hours*hourlyRate).toFixed(2);
+  const hours=totalMs/3600000;
+  totalHours.innerText=hours.toFixed(2);
+  totalPay.innerText=(hours*hourlyRate).toFixed(2);
 
   renderHistory(days);
 }
 
 function renderHistory(days){
-  const box=document.getElementById("historyList");
-  box.innerHTML="";
+  historyList.innerHTML="";
   for(const d in days){
     const div=document.createElement("div");
+    div.className="day";
     div.innerHTML=`<strong>${d}</strong>`;
     let lastIn=null;
     days[d].forEach(l=>{
       if(l.type==="in") lastIn=l.time.toDate();
       if(l.type==="out" && lastIn){
         const out=l.time.toDate();
-        div.innerHTML+=`<div style="margin-left:12px;">
+        div.innerHTML+=`<div class="pair">
           ${lastIn.toLocaleTimeString()} → ${out.toLocaleTimeString()}
         </div>`;
         lastIn=null;
       }
     });
-    box.appendChild(div);
+    historyList.appendChild(div);
   }
-}
-
-async function submitRequest(){
-  const u=auth.currentUser;
-  if(!u) return;
-  await db.collection("requests").add({
-    uid:u.uid,email:u.email,
-    date:reqDate.value,
-    clockIn:reqIn.value,
-    clockOut:reqOut.value,
-    reason:reqReason.value,
-    createdAt:new Date()
-  });
-  alert("Request submitted");
-  document.getElementById("requestBox").style.display="none";
 }
 </script>
 </body>
