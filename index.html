@@ -21,6 +21,7 @@ body {
   background:rgba(0,0,0,.35);
   padding:24px;
   border-radius:16px;
+  position: relative;
 }
 button {
   width:100%;
@@ -54,6 +55,28 @@ input {
 
 <body>
 <div class="card">
+  <button id="menuBtn" onclick="toggleMenu()" style="
+  position:absolute;
+  top:16px;
+  right:16px;
+  background:none;
+  color:white;
+  font-size:22px;
+  border:none;">
+☰
+</button>
+
+<div id="menu" style="display:none;margin-top:16px;">
+  <p><strong>Account:</strong> <span id="userEmail"></span></p>
+  <p><strong>Hourly Rate:</strong> $<span id="rate"></span>/hr</p>
+  <p><strong>Total Hours:</strong> <span id="totalHours"></span></p>
+  <p><strong>Total Earned:</strong> $<span id="totalPay"></span></p>
+
+  <button onclick="openRequest()" style="margin-top:12px;">
+    Request Time Change
+  </button>
+</div>
+
 <h1>Clock In / Out</h1>
 
 <div id="login">
@@ -66,6 +89,20 @@ input {
   <button class="primary" onclick="clockIn()">Clock In</button>
   <button class="secondary" onclick="clockOut()">Clock Out</button>
   <div id="status"></div>
+</div>
+
+<div id="history" style="margin-top:24px;">
+  <h3>Work History</h3>
+  <div id="historyList"></div>
+</div>
+
+<div id="requestBox" style="display:none;margin-top:16px;">
+  <h3>Request Time Change</h3>
+  <input type="date" id="reqDate">
+  <input type="time" id="reqIn">
+  <input type="time" id="reqOut">
+  <input type="text" id="reqReason" placeholder="Reason">
+  <button onclick="submitRequest()">Submit Request</button>
 </div>
 
 <button id="logoutBtn" onclick="logout()" style="display:none;margin-top:12px;">
@@ -122,6 +159,20 @@ auth.onAuthStateChanged(async user => {
   controlsBox.style.display = "block";
   logoutBtn.style.display = "block";
 
+  loadEmployeeData(user);
+
+  const doc = await db.collection("users").doc(user.uid).get();
+  if (doc.exists && doc.data().status === "in") {
+    showIn(doc.data().since.toDate().toLocaleTimeString());
+  } else {
+    showOut();
+  }
+});
+
+  loginBox.style.display = "none";
+  controlsBox.style.display = "block";
+  logoutBtn.style.display = "block";
+
   const doc = await db.collection("users").doc(user.uid).get();
   if (doc.exists && doc.data().status === "in") {
     showIn(doc.data().since.toDate().toLocaleTimeString());
@@ -172,6 +223,98 @@ async function clockOut(){
 
 function logout(){
   auth.signOut().then(()=>location.reload());
+}
+
+let hourlyRate = 20; // change later or store per-user
+
+function toggleMenu() {
+  const m = document.getElementById("menu");
+  m.style.display = m.style.display === "none" ? "block" : "none";
+}
+
+function openRequest() {
+  document.getElementById("requestBox").style.display = "block";
+}
+
+async function loadEmployeeData(user) {
+  document.getElementById("userEmail").innerText = user.email;
+  document.getElementById("rate").innerText = hourlyRate.toFixed(2);
+
+  const snap = await db.collection("logs")
+    .where("uid", "==", user.uid)
+    .orderBy("time")
+    .get();
+
+  const days = {};
+  let totalMs = 0;
+  let lastIn = null;
+
+  snap.forEach(doc => {
+    const d = doc.data();
+    const date = d.time.toDate().toDateString();
+
+    if (!days[date]) days[date] = [];
+    days[date].push(d);
+
+    if (d.type === "in") lastIn = d.time.toDate();
+    if (d.type === "out" && lastIn) {
+      totalMs += d.time.toDate() - lastIn;
+      lastIn = null;
+    }
+  });
+
+  const hours = totalMs / 3600000;
+  document.getElementById("totalHours").innerText = hours.toFixed(2);
+  document.getElementById("totalPay").innerText = (hours * hourlyRate).toFixed(2);
+
+  renderHistory(days);
+}
+
+function renderHistory(days) {
+  const box = document.getElementById("historyList");
+  box.innerHTML = "";
+
+  for (const day in days) {
+    const dayDiv = document.createElement("div");
+    dayDiv.innerHTML = `<strong>${day}</strong>`;
+
+    let lastIn = null;
+
+    days[day].forEach(log => {
+      if (log.type === "in") {
+        lastIn = log.time.toDate();
+      } else if (log.type === "out" && lastIn) {
+        const out = log.time.toDate();
+        const hrs = ((out - lastIn) / 3600000).toFixed(2);
+        dayDiv.innerHTML += `
+          <div style="margin-left:12px;">
+            ${lastIn.toLocaleTimeString()} → ${out.toLocaleTimeString()}
+            (${hrs} hrs)
+          </div>`;
+        lastIn = null;
+      }
+    });
+
+    box.appendChild(dayDiv);
+  }
+}
+
+async function submitRequest() {
+  const user = auth.currentUser;
+  if (!user) return;
+
+  await db.collection("requests").add({
+    uid: user.uid,
+    email: user.email,
+    date: reqDate.value,
+    clockIn: reqIn.value,
+    clockOut: reqOut.value,
+    reason: reqReason.value,
+    createdAt: new Date()
+  });
+
+  alert("Request submitted");
+  document.getElementById("requestBox").style.display = "none";
 }
 </script>
 </body>
