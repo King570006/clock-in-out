@@ -23,6 +23,21 @@ body {
   border-radius:16px;
   position: relative;
 }
+
+.card {
+  position: relative;
+}
+
+#menuBtn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  font-size: 22px;
+  color: white;
+}
+
 button {
   width:100%;
   padding:14px;
@@ -55,59 +70,51 @@ input {
 
 <body>
 <div class="card">
-  <button id="menuBtn" onclick="toggleMenu()" style="
-  position:absolute;
-  top:16px;
-  right:16px;
-  background:none;
-  color:white;
-  font-size:22px;
-  border:none;">
-☰
-</button>
+  <h1>Clock In / Out</h1>
 
-<div id="menu" style="display:none;margin-top:16px;">
-  <p><strong>Account:</strong> <span id="userEmail"></span></p>
-  <p><strong>Hourly Rate:</strong> $<span id="rate"></span>/hr</p>
-  <p><strong>Total Hours:</strong> <span id="totalHours"></span></p>
-  <p><strong>Total Earned:</strong> $<span id="totalPay"></span></p>
+  <!-- LOGIN ONLY -->
+  <div id="login">
+    <input id="email" type="email" placeholder="Email">
+    <input id="password" type="password" placeholder="Password">
+    <button onclick="login()">Login</button>
+  </div>
 
-  <button onclick="openRequest()" style="margin-top:12px;">
-    Request Time Change
-  </button>
-</div>
+  <!-- LOGGED-IN ONLY -->
+  <div id="app" style="display:none;">
 
-<h1>Clock In / Out</h1>
+    <button id="menuBtn" onclick="toggleMenu()">☰</button>
 
-<div id="login">
-  <input id="email" type="email" placeholder="Email">
-  <input id="password" type="password" placeholder="Password">
-  <button onclick="login()">Login</button>
-</div>
+    <div id="menu" style="display:none;">
+      <p><strong>Account:</strong> <span id="userEmail"></span></p>
+      <p><strong>Hourly Rate:</strong> $<span id="rate"></span>/hr</p>
+      <p><strong>Total Hours:</strong> <span id="totalHours"></span></p>
+      <p><strong>Total Earned:</strong> $<span id="totalPay"></span></p>
+      <button onclick="openRequest()">Request Time Change</button>
+    </div>
 
-<div id="controls">
-  <button class="primary" onclick="clockIn()">Clock In</button>
-  <button class="secondary" onclick="clockOut()">Clock Out</button>
-  <div id="status"></div>
-</div>
+    <div id="controls">
+      <button class="primary" onclick="clockIn()">Clock In</button>
+      <button class="secondary" onclick="clockOut()">Clock Out</button>
+      <div id="status"></div>
+    </div>
 
-<div id="history" style="margin-top:24px;">
-  <h3>Work History</h3>
-  <div id="historyList"></div>
-</div>
+    <div id="history">
+      <h3>Work History</h3>
+      <div id="historyList"></div>
+    </div>
 
-<div id="requestBox" style="display:none;margin-top:16px;">
-  <h3>Request Time Change</h3>
-  <input type="date" id="reqDate">
-  <input type="time" id="reqIn">
-  <input type="time" id="reqOut">
-  <input type="text" id="reqReason" placeholder="Reason">
-  <button onclick="submitRequest()">Submit Request</button>
-</div>
+    <div id="requestBox" style="display:none;">
+      <h3>Request Time Change</h3>
+      <input type="date" id="reqDate">
+      <input type="time" id="reqIn">
+      <input type="time" id="reqOut">
+      <input type="text" id="reqReason" placeholder="Reason">
+      <button onclick="submitRequest()">Submit Request</button>
+    </div>
 
-<button id="logoutBtn" onclick="logout()" style="display:none;margin-top:12px;">
-  Log out
-</button>
+    <button id="logoutBtn" onclick="logout()">Log out</button>
+
+  </div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -135,8 +142,8 @@ const statusText = document.getElementById("status");
 const logoutBtn = document.getElementById("logoutBtn");
 
 function login() {
-  const email = emailInput.value.trim();
-  const password = passwordInput.value.trim();
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value.trim();
 
   if (!email || !password) {
     alert("Enter email and password");
@@ -147,17 +154,19 @@ function login() {
     .catch(e => alert(e.message));
 }
 
+const appBox = document.getElementById("app");
+
 auth.onAuthStateChanged(async user => {
   if (!user) {
     loginBox.style.display = "block";
-    controlsBox.style.display = "none";
-    logoutBtn.style.display = "none";
+    appBox.style.display = "none";
     return;
   }
 
   loginBox.style.display = "none";
-  controlsBox.style.display = "block";
-  logoutBtn.style.display = "block";
+  appBox.style.display = "block";
+
+  document.getElementById("userEmail").innerText = user.email;
 
   loadEmployeeData(user);
 
