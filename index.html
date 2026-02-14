@@ -4,131 +4,15 @@
 <meta charset="UTF-8">
 <title>Clock In</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<style>
-:root {
-  --bg1:#0f2027;
-  --bg2:#203a43;
-  --bg3:#2c5364;
-  --card:#101820ee;
-  --accent:#00e676;
-  --danger:#ff5252;
-}
-
-* { box-sizing:border-box; }
-
-body {
-  margin:0;
-  font-family:-apple-system,BlinkMacSystemFont;
-  background:linear-gradient(180deg,var(--bg1),var(--bg2),var(--bg3));
-  color:#fff;
-  min-height:100vh;
-}
-
-/* ---------- LAYOUT ---------- */
-#loginScreen,
-#appScreen {
-  min-height:100vh;
-  display:flex;
-  flex-direction:column;
-  padding:20px;
-}
-
-.hidden { display:none; }
-
-/* ---------- LOGIN ---------- */
-#loginBox {
-  margin:auto;
-  max-width:420px;
-  background:var(--card);
-  padding:28px;
-  border-radius:18px;
-}
-
-input {
-  width:100%;
-  height:48px;
-  padding:12px;
-  margin-bottom:14px;
-  border-radius:12px;
-  border:none;
-  font-size:16px;
-}
-
-button {
-  width:100%;
-  height:48px;
-  border:none;
-  border-radius:14px;
-  font-size:16px;
-  font-weight:600;
-}
-
-.primary { background:var(--accent); color:#000; }
-.secondary { background:var(--danger); color:#fff; }
-
-/* ---------- APP HEADER ---------- */
-header {
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:16px;
-}
-
-#menuBtn {
-  background:none;
-  border:none;
-  color:white;
-  font-size:24px;
-}
-
-/* ---------- MENU ---------- */
-#menu {
-  background:var(--card);
-  border-radius:16px;
-  padding:16px;
-  margin-bottom:16px;
-}
-
-/* ---------- CLOCK ---------- */
-#clockBox {
-  background:var(--card);
-  padding:16px;
-  border-radius:16px;
-  margin-bottom:16px;
-}
-
-#status {
-  text-align:center;
-  margin-top:8px;
-  opacity:.8;
-}
-
-/* ---------- HISTORY ---------- */
-#history {
-  background:var(--card);
-  border-radius:16px;
-  padding:16px;
-}
-
-.day {
-  margin-bottom:14px;
-}
-
-.pair {
-  margin-left:12px;
-  font-size:14px;
-  opacity:.9;
-}
-</style>
+<link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
 
 <!-- LOGIN -->
-<div id="loginScreen">
-  <div id="loginBox">
-    <h2>Clock In</h2>
+<div id="loginView" class="center">
+  <div class="login-card">
+    <h1>Clock In</h1>
     <input id="email" type="email" placeholder="Email">
     <input id="password" type="password" placeholder="Password">
     <button class="primary" onclick="login()">Login</button>
@@ -136,161 +20,49 @@ header {
 </div>
 
 <!-- APP -->
-<div id="appScreen" class="hidden">
+<div id="appView" class="hidden">
 
-  <header>
+  <header class="topbar">
     <h2>Clock In</h2>
-    <button id="menuBtn" onclick="toggleMenu()">☰</button>
+    <button onclick="toggleMenu()">☰</button>
   </header>
 
-  <div id="menu" class="hidden">
-    <p><strong>Account:</strong> <span id="userEmail"></span></p>
-    <p><strong>Rate:</strong> $<span id="rate"></span>/hr</p>
-    <p><strong>Total Hours:</strong> <span id="totalHours"></span></p>
-    <p><strong>Total Earned:</strong> $<span id="totalPay"></span></p>
-    <button onclick="openRequest()">Request Time Change</button>
-  </div>
+  <main>
+    <section class="summary">
+      <p><b>Account:</b> <span id="userEmail"></span></p>
+      <p><b>Rate:</b> $<span id="rate"></span>/hr</p>
+      <p><b>Total Hours:</b> <span id="totalHours">0</span></p>
+      <p><b>Total Earned:</b> $<span id="totalPay">0</span></p>
+    </section>
 
-  <div id="clockBox">
-    <button id="clockInBtn" class="primary" onclick="clockIn()">Clock In</button>
-    <button id="clockOutBtn" class="secondary hidden" onclick="clockOut()">Clock Out</button>
-    <div id="status"></div>
-  </div>
+    <button class="primary big" onclick="clockIn()">Clock In</button>
+    <button class="secondary big hidden" onclick="clockOut()">Clock Out</button>
 
-  <div id="history">
-    <h3>Work History</h3>
-    <div id="historyList"></div>
-  </div>
+    <p id="status"></p>
 
-  <button style="margin-top:16px;" onclick="logout()">Log out</button>
+    <section>
+      <h3>Work History</h3>
+      <div id="historyList"></div>
+    </section>
+
+    <button class="ghost" onclick="openRequest()">Request Time Change</button>
+
+    <div id="requestBox" class="hidden">
+      <input type="date" id="reqDate">
+      <input type="time" id="reqIn">
+      <input type="time" id="reqOut">
+      <input type="text" id="reqReason" placeholder="Reason">
+      <button onclick="submitRequest()">Submit</button>
+    </div>
+
+    <button class="ghost" onclick="logout()">Log out</button>
+  </main>
+
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-
-<script>
-firebase.initializeApp({
-  apiKey:"AIzaSyCnzBdlGPviltn6P8pID14lgkXHx6zQifA",
-  authDomain:"clock-in-out-56209.firebaseapp.com",
-  projectId:"clock-in-out-56209"
-});
-
-const auth=firebase.auth();
-const db=firebase.firestore();
-const hourlyRate=20;
-
-/* ---------- AUTH ---------- */
-function login(){
-  auth.signInWithEmailAndPassword(
-    email.value.trim(),
-    password.value.trim()
-  ).catch(e=>alert(e.message));
-}
-
-auth.onAuthStateChanged(async user=>{
-  if(!user){
-    loginScreen.classList.remove("hidden");
-    appScreen.classList.add("hidden");
-    return;
-  }
-
-  loginScreen.classList.add("hidden");
-  appScreen.classList.remove("hidden");
-
-  userEmail.innerText=user.email;
-  rate.innerText=hourlyRate.toFixed(2);
-
-  await loadData(user);
-});
-
-/* ---------- CLOCK ---------- */
-function showIn(t){
-  clockInBtn.classList.add("hidden");
-  clockOutBtn.classList.remove("hidden");
-  status.innerText=`Clocked in at ${t.toLocaleTimeString()}`;
-}
-
-function showOut(){
-  clockOutBtn.classList.add("hidden");
-  clockInBtn.classList.remove("hidden");
-  status.innerText="Clocked out";
-}
-
-async function clockIn(){
-  const now=new Date();
-  await db.collection("logs").add({uid:auth.currentUser.uid,type:"in",time:now});
-  await db.collection("users").doc(auth.currentUser.uid)
-    .set({status:"in",since:now},{merge:true});
-  showIn(now);
-}
-
-async function clockOut(){
-  const now=new Date();
-  await db.collection("logs").add({uid:auth.currentUser.uid,type:"out",time:now});
-  await db.collection("users").doc(auth.currentUser.uid)
-    .set({status:"out"},{merge:true});
-  showOut();
-}
-
-/* ---------- MENU ---------- */
-function toggleMenu(){
-  menu.classList.toggle("hidden");
-}
-
-function logout(){
-  auth.signOut();
-}
-
-/* ---------- DATA ---------- */
-async function loadData(user){
-  const snap=await db.collection("logs")
-    .where("uid","==",user.uid)
-    .orderBy("time").get();
-
-  const days={};
-  let totalMs=0,lastIn=null;
-
-  snap.forEach(d=>{
-    const l=d.data();
-    const day=l.time.toDate().toDateString();
-    if(!days[day]) days[day]=[];
-    days[day].push(l);
-
-    if(l.type==="in") lastIn=l.time.toDate();
-    if(l.type==="out" && lastIn){
-      totalMs+=l.time.toDate()-lastIn;
-      lastIn=null;
-    }
-  });
-
-  const hours=totalMs/3600000;
-  totalHours.innerText=hours.toFixed(2);
-  totalPay.innerText=(hours*hourlyRate).toFixed(2);
-
-  renderHistory(days);
-}
-
-function renderHistory(days){
-  historyList.innerHTML="";
-  for(const d in days){
-    const div=document.createElement("div");
-    div.className="day";
-    div.innerHTML=`<strong>${d}</strong>`;
-    let lastIn=null;
-    days[d].forEach(l=>{
-      if(l.type==="in") lastIn=l.time.toDate();
-      if(l.type==="out" && lastIn){
-        const out=l.time.toDate();
-        div.innerHTML+=`<div class="pair">
-          ${lastIn.toLocaleTimeString()} → ${out.toLocaleTimeString()}
-        </div>`;
-        lastIn=null;
-      }
-    });
-    historyList.appendChild(div);
-  }
-}
-</script>
+<script src="app.js"></script>
 </body>
 </html>
