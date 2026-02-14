@@ -189,15 +189,6 @@ auth.onAuthStateChanged(async user => {
   }
 });
 
-
-  const doc = await db.collection("users").doc(user.uid).get();
-  if (doc.exists && doc.data().status === "in") {
-    showIn(doc.data().since.toDate().toLocaleTimeString());
-  } else {
-    showOut();
-  }
-});
-
 function showIn(t){ 
   document.querySelector(".primary").style.display="none";
   document.querySelector(".secondary").style.display="block";
